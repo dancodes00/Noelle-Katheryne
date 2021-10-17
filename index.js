@@ -1,4 +1,4 @@
-require('dotenv')
+require('dotenv').config()
 const Discord = require('discord.js')
 const noelle = new Discord.Client()
 const mongoose = require('mongoose')
@@ -101,19 +101,27 @@ atarashi.on("change", async next => {
   })
 })
 
-noelle.on('ready', async () => {
-  // noelle.user.setPresence(
-  //   { 
-  //     activity: { 
-  //       name: 'your possible problems', //▶︎Henceforth
-  //       type: 'LISTENING',
-  //     },
-  //     status: 'online'
-  //   }
-  // )
+noelle.once('ready', async () => {
+  noelle.user.setPresence(
+    { 
+      activity: { 
+        name: 'with Klee~', //▶︎Henceforth
+        type: 'PLAYING',
+      },
+      status: 'online'
+    }
+  )
 
   // await AxieInfinitySlashCommands(noelle)
   // console.log(await noelle.api.applications(noelle.user.id).commands.get())
+})
+
+noelle.once('reconnecting', () => {
+  console.log('Reconnecting!')
+})
+
+noelle.once('disconnect', () => {
+  console.log('Disconnect!')
 })
 
 // noelle.on('message', async msg => {
