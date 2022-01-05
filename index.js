@@ -13,7 +13,7 @@ mongoose.connect(process.env.AkashicRecords, {
   useNewUrlParser: true, 
   useUnifiedTopology: true,
   useFindAndModify: false
-})
+}).catch(console.log)
 
 const applyText = (canvas, text) => {
 	const context = canvas.getContext('2d')
@@ -105,8 +105,8 @@ noelle.once('ready', async () => {
   noelle.user.setPresence(
     { 
       activity: { 
-        name: 'with Klee~', //▶︎Henceforth
-        type: 'PLAYING',
+        name: 'your orders~', //▶︎Henceforth
+        type: 'LISTENING',
       },
       status: 'online'
     }
@@ -115,6 +115,21 @@ noelle.once('ready', async () => {
   // await AxieInfinitySlashCommands(noelle)
   // console.log(await noelle.api.applications(noelle.user.id).commands.get())
 })
+
+const resetStatus = new cron('* */10 * * * *', async () => {
+  if(noelle.user.presence.activities.length > 0) return
+
+  noelle.user.setPresence(
+    { 
+      activity: { 
+        name: 'your orders~', //▶︎Henceforth
+        type: 'LISTENING',
+      },
+      status: 'online'
+    }
+  )
+  console.log(`Status Reset: ${resetStatus.lastDate().toLocaleString()}`)
+}, null, true, 'Asia/Manila')
 
 noelle.once('reconnecting', () => {
   console.log('Reconnecting!')
