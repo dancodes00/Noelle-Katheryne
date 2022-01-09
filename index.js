@@ -102,33 +102,37 @@ atarashi.on("change", async next => {
 })
 
 noelle.once('ready', async () => {
-  noelle.user.setPresence(
-    { 
-      activity: { 
-        name: 'your orders~', //▶︎Henceforth
-        type: 'LISTENING',
-      },
-      status: 'online'
-    }
-  )
+//   noelle.user.setPresence(
+//     { 
+//       activity: { 
+//         name: 'your orders~', //▶︎Henceforth
+//         type: 'LISTENING',
+//       },
+//       status: 'online'
+//     }
+//   )
 
   // await AxieInfinitySlashCommands(noelle)
   // console.log(await noelle.api.applications(noelle.user.id).commands.get())
 })
 
 const resetStatus = new cron('* */10 * * * *', async () => {
-  if(noelle.user.presence.activities.length > 0) return
+    try {
+        if(noelle.user?.presence.activities.length > 0) return
 
-  noelle.user.setPresence(
-    { 
-      activity: { 
-        name: 'your orders~', //▶︎Henceforth
-        type: 'LISTENING',
-      },
-      status: 'online'
+        noelle.user.setPresence(
+            { 
+            activity: { 
+                name: 'your orders~', //▶︎Henceforth
+                type: 'LISTENING',
+            },
+                status: 'online'
+            }
+        )
+        console.log(`Status Reset: ${resetStatus.lastDate().toLocaleString()}`)
+    } catch(e) {
+        console.log(`Date: ${resetStatus.lastDate().toLocaleString()}`)
     }
-  )
-  console.log(`Status Reset: ${resetStatus.lastDate().toLocaleString()}`)
 }, null, true, 'Asia/Manila')
 
 noelle.once('reconnecting', () => {
