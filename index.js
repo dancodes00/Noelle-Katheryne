@@ -93,7 +93,7 @@ db.on('open', async () => {
     context.stroke()
     context.closePath()
 
-    const attachment = new Discord.MessageAttachment(canvas.toBuffer(), 'axies.png')
+    const attachment = new Discord.MessageAttachment(canvas.toBuffer(), `welcome-${user.username}.png`)
     await GUILD.channels.cache.get('870747129499500595').send(`Hi ${user.toString()}, welcome to the **${GUILD.name}** server.\nWe're so glad to have you here. Be sure to check out the <#870934841263288330>, and please, Enjoy your stay.`, { files: [attachment] }).then(msg => {
       msg.react('👋')
     })
