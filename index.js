@@ -105,11 +105,16 @@ atarashi.on("change", async next => {
         const attachment = new Discord.MessageAttachment(canvas.toBuffer(), `welcome-${user.username}.png`)
 
         const welcome_channel = next.operationType === `update` && next.updateDescription.updatedFields?.isSupport?.member ? `959999572384550932` : `870747129499500595`
-        await GUILD.channels.cache.get('870747129499500595').send(`Hi ${user.toString()}, welcome to the **${GUILD.name}** server.\nWe're so glad to have you here. Be sure to check out the <#870934841263288330>, and please, Enjoy your stay.`, { files: [attachment] }).then(msg => {
+        const role_assign = next.operationType === `update` && next.updateDescription.updatedFields?.isSupport?.member ? `<#960002414382035005>` : `<#870934841263288330>`
+        await GUILD.channels.cache.get(welcome_channel).send({
+            content: `Hi ${user.toString()}, welcome to the **${GUILD.name}** server.\nWe're so glad to have you here. Be sure to check out the ${role_assign}, and please, Enjoy your stay.`,
+            files: [attachment] 
+        }).then(msg => {
             msg.react('👋')
         })
     } catch(e){
         console.log(e)
+        await noelle.users.cache.get('851062978416869377').send({ content: `Failed to welcome users: \`\`\`${e}\`\`\`` })
     }
 })
 
