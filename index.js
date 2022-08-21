@@ -60,7 +60,7 @@ katheryne.on('ready', async () => {
     GUILD.channels.cache.get('855318678991011840').messages.fetch('869505416839700540') // Accept - Main
     GUILD.channels.cache.get('870934841263288330').messages.fetch('872085611757047848') // Self Roles - Main
     
-    if(true) applyGameUpdates()
+    if(false) applyGameUpdates()
 })
 
 katheryne.on(`guildMemberRemove`, async member => {
@@ -127,7 +127,7 @@ async function welcomeAtarashiNakama(member){
         const user = member.user
         const GUILD = katheryne.guilds.cache.get(OfficialServer)
 
-        const random = Math.floor(Math.random() * 19) + 1
+        const random = Math.floor(Math.random() * 17) + 1
 
         const canvas = Canvas.createCanvas(1100, 500)
         const context = canvas.getContext('2d')
