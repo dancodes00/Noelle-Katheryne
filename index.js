@@ -1,53 +1,131 @@
 require('dotenv').config()
-const Discord = require('discord.js')
-const noelle = new Discord.Client()
-const mongoose = require('mongoose')
-const fetch = require('node-fetch')
-const cron = require('cron').CronJob
+
 const Canvas = require('canvas')
 Canvas.registerFont('./fonts/Uni Sans Regular.ttf', { family: 'Uni Sans Regular' })
 
-const AtarashiNakama = require('./schemas/atarashi')
+const Discord = require('discord.js')
+const KatheryneClient = require('./client/katheryne.client')
 
-mongoose.connect(process.env.AkashicRecords, { 
-  useNewUrlParser: true, 
-  useUnifiedTopology: true,
-  useFindAndModify: false
-}).catch(console.log)
+const katheryne = new KatheryneClient()
 
-const applyText = (canvas, text) => {
-	const context = canvas.getContext('2d')
-	let fontSize = 70;
+const OfficialServer = "848169570954641438"
+const Graey = "851062978416869377"
 
-	do {
-		context.font = `${fontSize -= 10}px Uni Sans Regular`;
-	} while (context.measureText(text).width > canvas.width - 375)
 
-	return context.font;
-}
+const GAME_ROLE = [
+    {
+        role: "926824113933283328",
+        emoji: "926833395235950592"
+    },
+    {  
+        role: "909380210703618078",
+        emoji: "872048058966351913"
+    },
+    {  
+        role: "916547312061407312",
+        emoji: "916546495879213056"
+    },
+    {  
+        role: "909380571812216862",
+        emoji: "872048059545169920"
+    },
+    {  
+        role: "1010732522805669969",
+        emoji: "1010732307759497299"
+    },
+    {  
+        role: "909380988285616129",
+        emoji: "872048058945376257"
+    },
+]
 
-const db = mongoose.connection
-db.on('error', e => console.log({ message: e.message }))
-db.on('open', async () => {
-  const datenow = new Date().toLocaleString('en-US', { timeZone: 'Asia/Manila' })
-  console.log(`Connected to noelle's data sets\nDate: ${datenow}`)
+katheryne.login(process.env.KATHERYNE)
+
+katheryne.on('ready', async () => {
+    katheryne.user.setPresence(
+        { 
+            activities: [
+                { 
+                name: `${katheryne.guilds.cache.get(OfficialServer).name} server`, //▶︎Henceforth
+                type: 'WATCHING',
+                }
+            ],
+            status: 'online'
+        }
+    )
+
+    const GUILD = katheryne.guilds.cache.get(OfficialServer)
+
+    GUILD.channels.cache.get('855318678991011840').messages.fetch('869505056096022538') // Rules - Main
+    GUILD.channels.cache.get('855318678991011840').messages.fetch('869505416839700540') // Accept - Main
+    GUILD.channels.cache.get('870934841263288330').messages.fetch('872085611757047848') // Self Roles - Main
+    
+    if(true) applyGameUpdates()
 })
 
-const atarashi = AtarashiNakama.watch([], {
-    fullDocument: `updateLookup`
+katheryne.on(`guildMemberRemove`, async member => {
+    const user = member.user
+    if(user.bot) return
+
+    katheryne.users.cache.get(Graey).send({ content: `**${user.username}** leaves the server~`})
 })
 
-atarashi.on("change", async next => {
-    // process any change event
+katheryne.on('messageReactionAdd', async (reaction, user) => {
+    let msg = reaction.message, emoji = reaction.emoji
+    const GUILD = katheryne.guilds.cache.get(OfficialServer)
+    if(msg.channel.type === 'dm') return
+
+    // Check for rules react with verify_teal in main & support
+    if(msg.channel.id === `855318678991011840`){ // rules
+
+        //** Restrict bot reacts */
+        //** Prevent react from any other messages beside the registered message */
+        //** Remove any other reaction except verify_teal */
+        if(msg.author.bot) return
+        if(msg.id !== `869505416839700540`) return reaction.users.remove(user.id)
+        if(emoji.name !== `verify_teal`) return reaction.users.remove(user.id)
+
+        const member = GUILD.members.cache.get(user.id)
+
+        return member.roles.add("870746490451148858").then(async () => {
+            await welcomeAtarashiNakama(member)
+        })
+    } else if (msg.channel.id === `870934841263288330`){ // self role
+
+        if(msg.id === `872085611757047848`){
+            const GUILD = katheryne.guilds.cache.get(OfficialServer)
+
+            const GAME = GAME_ROLE.find(data => data.emoji === emoji.id)
+
+            if(!GAME) return reaction.users.remove(user.id)
+            
+            GUILD.members.cache.get(user.id).roles.add(GAME.role)
+        } 
+    }
+})
+
+katheryne.on('messageReactionRemove', async (reaction, user) => {
+    let msg = reaction.message, emoji = reaction.emoji
+
+    if(msg.channel.id === `870934841263288330`){
+        if(msg.id === `872085611757047848`){
+
+            const GUILD = katheryne.guilds.cache.get(OfficialServer)
+
+            const GAME = GAME_ROLE.find(data => data.emoji === emoji.id)
+
+            if(!GAME) return
+            
+            GUILD.members.cache.get(user.id).roles.remove(GAME.role)
+        }
+    }
+
+})
+
+async function welcomeAtarashiNakama(member){
     try{
-        if(next.operationType !== `insert` && next.operationType !== `update`) return 
-        if(next.operationType === `update` && !next.updateDescription.updatedFields?.isSupport?.member) return
-        const atarashi = next?.fullDocument ?? false
-
-        if(!atarashi) return
-
-        const user = noelle.users.cache.get(atarashi.discord.id)
-        const GUILD = noelle.guilds.cache.get('848169570954641438')
+        const user = member.user
+        const GUILD = katheryne.guilds.cache.get(OfficialServer)
 
         const random = Math.floor(Math.random() * 19) + 1
 
@@ -86,8 +164,8 @@ atarashi.on("change", async next => {
         context.lineWidth = 3
         context.strokeText(`Discord ID: ${user.id}`, text_x, text_y + text_height)
         context.fillText(`Discord ID: ${user.id}`, text_x, text_y + text_height)
-        context.strokeText(`αℓтяια Key: ${atarashi.user.id}`, text_x, text_y + text_height+discordText_height+10)
-        context.fillText(`αℓтяια Key: ${atarashi.user.id}`, text_x, text_y + text_height+discordText_height+10)
+        // context.strokeText(`αℓтяια Key: ${atarashi.user.id}`, text_x, text_y + text_height+discordText_height+10)
+        // context.fillText(`αℓтяια Key: ${atarashi.user.id}`, text_x, text_y + text_height+discordText_height+10)
 
         context.beginPath()
         context.arc(x + (avatar.width/2), y + (avatar.height/2), size * 0.5, 0, 2 * Math.PI)
@@ -104,74 +182,62 @@ atarashi.on("change", async next => {
 
         const attachment = new Discord.MessageAttachment(canvas.toBuffer(), `welcome-${user.username}.png`)
 
-        const welcome_channel = next.operationType === `update` && next.updateDescription.updatedFields?.isSupport?.member ? `959999572384550932` : `870747129499500595`
-        const role_assign = next.operationType === `update` && next.updateDescription.updatedFields?.isSupport?.member ? `<#960002414382035005>` : `<#870934841263288330>`
-        await GUILD.channels.cache.get(welcome_channel).send({
-            content: `Hi ${user.toString()}, welcome to the **${GUILD.name}** server.\nWe're so glad to have you here. Be sure to check out the ${role_assign}, and please, Enjoy your stay.`,
+        await GUILD.channels.cache.get("870747129499500595").send({
+            content: `Hi ${user.toString()}, welcome to the **${GUILD.name}** server.\nWe're so glad to have you here. Be sure to check out the <#870934841263288330>, and please, Enjoy your stay.`,
             files: [attachment] 
         }).then(msg => {
             msg.react('👋')
         })
     } catch(e){
         console.log(e)
-        await noelle.users.cache.get('851062978416869377').send({ content: `Failed to welcome users: \`\`\`${e}\`\`\`` })
+        await katheryne.users.cache.get(Graey).send({ content: `Failed to welcome users: \`\`\`${e}\`\`\`` })
     }
-})
+}
 
-noelle.once('ready', async () => {
-//   noelle.user.setPresence(
-//     { 
-//       activity: { 
-//         name: 'your orders~', //▶︎Henceforth
-//         type: 'LISTENING',
-//       },
-//       status: 'online'
-//     }
-//   )
+function applyText(canvas, text){
+	const context = canvas.getContext('2d')
+	let fontSize = 70;
 
-  // await AxieInfinitySlashCommands(noelle)
-  // console.log(await noelle.api.applications(noelle.user.id).commands.get())
-})
+	do {
+		context.font = `${fontSize -= 10}px Uni Sans Regular`;
+	} while (context.measureText(text).width > canvas.width - 375)
 
-const resetStatus = new cron('* */10 * * * *', async () => {
-    try {
-        if(noelle.user?.presence.activities.length > 0) return
+	return context.font;
+}
 
-        noelle.user.setPresence(
-            { 
-            activity: { 
-                name: 'your orders~', //▶︎Henceforth
-                type: 'LISTENING',
-            },
-                status: 'online'
+async function applyGameUpdates(){
+    const GUILD = katheryne.guilds.cache.get(OfficialServer)
+    const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
+
+    const d = new Date(new Date().toLocaleString('en-US',{ timeZone: 'Asia/Manila' }))
+
+    const GAME_LIST = GAME_ROLE.map(i => {
+        const role = GUILD.roles.cache.find(role => role.id === i.role)
+        const emoji = katheryne.emojis.cache.find(emoji => emoji.id === i.emoji) 
+        return `${emoji} ${role.name} → ${role}`
+    })
+
+    const embed = {
+        title: `🎮️ Games`,
+        color: 3092790,
+        description: `To see specific game categories please react with the emotes below based on your preferences.\n\n**Note**:\n - You can react to multiple games. Reacting again will remove your role.\n - Do **NOT** react to a game that you don't have or haven't even played yet.`,
+        fields: [
+            {
+                name: `Options`,
+                value: GAME_LIST.join('\n')
             }
-        )
-        console.log(`Status Reset: ${resetStatus.lastDate().toLocaleString()}`)
-    } catch(e) {
-        console.log(`Date: ${resetStatus.lastDate().toLocaleString()}`)
+        ],
+        footer: {
+            icon_url: katheryne.users.cache.get(Graey).displayAvatarURL({ dynamic: true }),
+            text: `Updated • ${monthNames[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`
+        }
     }
-}, null, true, 'Asia/Manila')
 
-noelle.once('reconnecting', () => {
-  console.log('Reconnecting!')
-})
-
-noelle.once('disconnect', () => {
-  console.log('Disconnect!')
-})
-
-// noelle.on('message', async msg => {
-//   if(msg.content == `send`){
-//     const saveUser = new AtarashiNakama({
-//       discord: {
-//         id: msg.author.id
-//       }
-//     })
-
-//     if(await saveUser.save()){
-//       console.log(`saved`)
-//     }
-//   }
-// })
-
-noelle.login(process.env.Noelle)
+    katheryne.guilds.cache.get(OfficialServer).channels.cache.get('870934841263288330').messages.fetch('872085611757047848')
+    .then(async msg => {
+        await msg.edit({ embeds: [embed] })
+        GAME_ROLE.map(async i => {
+            msg.react(i.emoji)
+        })   
+    })
+}
